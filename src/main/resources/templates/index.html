@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset="UTF-8" />
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+	<script src="http://code.jquery.com/jquery-latest.js"></script>
+</head>
+
+<body>
+
+	<div align='center'>
+		<h1>Demo TEST</h1>
+	</div>
+
+	<div align='center'>
+		<button id='showCustomers'>班級查詢</button>
+		||
+		<button id='showCreatePage'>新增</button>
+		||
+		<button id='showUpdatePage'>修改</button>
+		||
+		<button id='showDeletePage'>刪除</button>
+		||
+		<button id='clearCustomers'>清除</button>
+		<hr>
+		<!-- List End -->
+		<div id='customerArea'></div>
+
+		<!-- Create Table -->
+		<div id="createArea">
+			<form>
+				<table id="createTable" border='1'>
+					<tr>
+						<th>教室名稱</th>
+						<th>學生名稱</th>
+					</tr>
+					<tr>
+						<td>
+							<input type="text" id="className">
+						</td>
+						<td>
+							<input type="text" id="studentName">
+						</td>
+					</tr>
+				</table>
+				<input type='button' name='submit' value='送出' onclick='processFormData()'>
+			</form>
+		</div>
+
+		<!-- update Table -->
+		<div id="updateArea">
+			<form>
+				<table border='1'>
+					<tr>
+						<th>學生ID</th>
+						<th>學生名稱</th>
+					</tr>
+					<tr>
+						<td>
+							<input type="text" id="studentId">
+						</td>
+						<td>
+							<input type="text" id="updateStudentName">
+						</td>
+					</tr>
+				</table>
+				<input type='button' name='submit' value='更新' onclick='formUpdata()'>
+			</form>
+		</div>
+
+		<!-- Delete Table -->
+		<div id="deleteArea">
+			<form>
+				<table border='1'>
+					<tr>
+						<th>學生ID</th>
+					</tr>
+					<tr>
+						<td>
+							<input type="text" id="deleteStudentId">
+						</td>
+					</tr>
+				</table>
+				<input type='button' name='submit' value='刪除' onclick='formDeleteStudent()'>
+			</form>
+		</div>
+	</div>
+</body>
+<script>
+	var customerArea;
+	document.getElementById("createArea").style.display = "none";
+	document.getElementById("updateArea").style.display = "none";
+	document.getElementById("deleteArea").style.display = "none";
+	var submitBtn = document.getElementById("submitBtn");
+	var className = document.getElementById("className");
+	var studentName = document.getElementById("studentName");
+	var updateStudentName = document.getElementById("updateStudentName");
+	var deleteStudentId = document.getElementById("deleteStudentId");
+	customerArea = document.getElementById("customerArea");
+
+	//請求表頭
+	let headers = {
+		"Content-Type": "application/json",
+		"Accept": "application/json",
+	};
+
+	window.onload = function () {
+		var showBtn = document.getElementById("showCustomers");
+		var clearBtn = document.getElementById("clearCustomers");
+		var createPageBtn = document.getElementById("showCreatePage");
+		var updatePageBtn = document.getElementById("showUpdatePage");
+		var deletePageBtn = document.getElementById("showDeletePage")
+
+		//清空畫面
+		clearBtn.onclick = function () {
+			customerArea.innerHTML = "";
+			document.getElementById("createArea").style.display = "none";
+			document.getElementById("updateArea").style.display = "none";
+			document.getElementById("deleteArea").style.display = "none";
+		};
+
+		//顯示新增畫面
+		createPageBtn.onclick = function () {
+			customerArea.innerHTML = ""
+			document.getElementById("createArea").style.display = "";
+			document.getElementById("updateArea").style.display = "none";
+			document.getElementById("deleteArea").style.display = "none";
+		};
+
+		//顯示修改畫面
+		updatePageBtn.onclick = function () {
+			customerArea.innerHTML = ""
+			document.getElementById("updateArea").style.display = "";
+			document.getElementById("createArea").style.display = "none";
+			document.getElementById("deleteArea").style.display = "none";
+		}
+
+		//顯示刪除畫面
+		deletePageBtn.onclick = function () {
+			customerArea.innerHTML = ""
+			document.getElementById("deleteArea").style.display = "";
+			document.getElementById("createArea").style.display = "none";
+			document.getElementById("updateArea").style.display = "none";
+		}
+
+		showBtn.onclick = function () {
+			axios({
+				method: "POST",
+				url: '/class/list',
+				data: "",
+				headers: headers
+			})
+				.then((response) => showCustomers(response))
+				.catch((error) => showCustomers(error))
+		}
+	}
+
+	function showCustomers(response) {
+		//alert(bookText);
+		document.getElementById("createArea").style.display = "none";
+		console.log(response);
+		var customers = response.data;
+		var htmlSegment = "<table border='1'>";
+		htmlSegment += "<tr><th>主鍵</th><th>班級名稱</th>";
+		// 				+  "<th>封面</th></tr>";
+		for (var i = 0; i < customers.length; i++) {
+			var customer = customers[i];
+
+			// 		url = "<c:url value='/bookCoverImage/' />" +  book.bookId;
+			// 		alert(url);
+			htmlSegment += "<tr>" + "<td>" + customer.classId + "</td>"
+				+ "<td>" + customer.className + "</td>" + "</tr>";
+			// 		alert(htmlSegment);
+		}
+
+		htmlSegment += "</table>";
+		customerArea.innerHTML = htmlSegment;
+	}
+
+	function formDeleteStudent() {
+		const sId = deleteStudentId.value;
+		const formData = { studentId: sId };
+		var checkBox = confirm("確定要刪除編號: " + sId + " 嗎?");
+		if (checkBox == true) {
+			axios({
+				method: "POST",
+				url: '/class/del',
+				data: formData,
+				headers: headers
+			})
+				.then(result => checkSuccess(result))
+				.catch(err => checkSuccess(err))
+		}
+	}
+
+	function formUpdata() {
+		const sId = studentId.value;
+		const sName = updateStudentName.value;
+		const formData = { studentId: sId, studentName: sName }
+		axios({
+			method: 'POST',
+			url: '/class/revise',
+			data: formData,
+			headers: headers
+		})
+			.then(result => checkSuccess(result))
+			.catch(err => checkSuccess(err))
+	}
+
+	function processFormData() {
+		const cName = className.value;
+		const sName = studentName.value;
+		const sa = { studentName: sName };
+		var students = [sa]
+		const formData = { className: cName, students };
+		axios({
+			method: "POST",
+			url: '/class/add',
+			data: formData,
+			headers: headers
+		})
+			.then(result => checkSuccess(result))
+			.catch(err => checkSuccess(err))
+	}
+
+	function checkSuccess(result) {
+		if (result.status == 200) {
+			alert("操作成功!!");
+		} else {
+			alert("操作失敗!!");
+		}
+
+		document.getElementById("createArea").style.display = "none";
+		document.getElementById("updateArea").style.display = "none";
+		document.getElementById("deleteArea").style.display = "none";
+	}
+</script>
